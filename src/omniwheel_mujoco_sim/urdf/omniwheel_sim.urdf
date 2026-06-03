@@ -1,0 +1,152 @@
+<?xml version="1.0"?>
+<robot name="omniwheel">
+  <link name="base_footprint"/>
+
+  <joint name="base_footprint_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+  </joint>
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0.10" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.18" length="0.10"/>
+      </geometry>
+      <material name="base_green">
+        <color rgba="0.23 0.30 0.14 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <link name="Wheel1_Link"/>
+  <joint name="Wheel1_Joint" type="fixed">
+    <origin xyz="0.06425 -0.111284 0.101" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="Wheel1_Link"/>
+  </joint>
+
+  <link name="Wheel_1">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder radius="0.09175" length="0.02075"/>
+      </geometry>
+      <material name="wheel_right">
+        <color rgba="0.0 0.85 0.0 1.0"/>
+      </material>
+    </visual>
+  </link>
+  <joint name="Wheel_1_RotJoint" type="continuous">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="Wheel1_Link"/>
+    <child link="Wheel_1"/>
+    <axis xyz="0 0 -1"/>
+  </joint>
+
+  <link name="Wheel2_Link"/>
+  <joint name="Wheel2_Joint" type="fixed">
+    <origin xyz="0.06425 0.111284 0.101" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="Wheel2_Link"/>
+  </joint>
+
+  <link name="Wheel2">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder radius="0.09175" length="0.02075"/>
+      </geometry>
+      <material name="wheel_left">
+        <color rgba="0.0 0.2 1.0 1.0"/>
+      </material>
+    </visual>
+  </link>
+  <joint name="Wheel_2_RotJoint" type="continuous">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="Wheel2_Link"/>
+    <child link="Wheel2"/>
+    <axis xyz="0 0 -1"/>
+  </joint>
+
+  <link name="Wheel3_Link"/>
+  <joint name="Wheel3_Joint" type="fixed">
+    <origin xyz="-0.1285 0 0.101" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="Wheel3_Link"/>
+  </joint>
+
+  <link name="Wheel3">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder radius="0.09175" length="0.02075"/>
+      </geometry>
+      <material name="wheel_back">
+        <color rgba="0.85 0.65 0.0 1.0"/>
+      </material>
+    </visual>
+  </link>
+  <joint name="Wheel_3_RotJoint" type="continuous">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="Wheel3_Link"/>
+    <child link="Wheel3"/>
+    <axis xyz="0 0 -1"/>
+  </joint>
+
+  <link name="Pendulum_Cross_1">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 1.57079632679 0"/>
+      <geometry>
+        <cylinder radius="0.012" length="0.12"/>
+      </geometry>
+      <material name="pendulum_joint">
+        <color rgba="0.07 0.91 0.82 1.0"/>
+      </material>
+    </visual>
+  </link>
+  <joint name="Pendulum_Joint_1" type="revolute">
+    <origin xyz="0 0 0.48833" rpy="-1.57079632679 0 0"/>
+    <parent link="base_link"/>
+    <child link="Pendulum_Cross_1"/>
+    <axis xyz="0 0 -1"/>
+    <limit lower="-0.2" upper="0.2" effort="0" velocity="1.0"/>
+  </joint>
+
+  <link name="Pendulum_Cross_2">
+    <visual>
+      <origin xyz="-0.5 0 0" rpy="0 1.57079632679 0"/>
+      <geometry>
+        <cylinder radius="0.018" length="1.0"/>
+      </geometry>
+      <material name="pendulum_arm">
+        <color rgba="0.92 0.0 0.25 1.0"/>
+      </material>
+    </visual>
+  </link>
+  <joint name="Pendulum_Joint_2" type="revolute">
+    <origin xyz="0 0 0" rpy="0 -1.57079632679 0"/>
+    <parent link="Pendulum_Cross_1"/>
+    <child link="Pendulum_Cross_2"/>
+    <axis xyz="0 0 -1"/>
+    <limit lower="-0.2" upper="0.2" effort="0" velocity="1.0"/>
+  </joint>
+
+  <link name="Pendulum_EE">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="0.04"/>
+      </geometry>
+      <material name="pendulum_ee">
+        <color rgba="0.69 0.66 0.64 1.0"/>
+      </material>
+    </visual>
+  </link>
+  <joint name="Pendulum_EE_joint" type="fixed">
+    <origin xyz="-1.0125 0 0" rpy="0 0 0"/>
+    <parent link="Pendulum_Cross_2"/>
+    <child link="Pendulum_EE"/>
+  </joint>
+</robot>

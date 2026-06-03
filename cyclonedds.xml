@@ -1,0 +1,13 @@
+<CycloneDDS>
+    <Domain>
+        <General>
+            <Interfaces>
+                <NetworkInterface name="lo" priority="default" multicast="true" />
+            </Interfaces>
+        </General>
+        <Discovery>
+            <ParticipantIndex>auto</ParticipantIndex>
+            <MaxAutoParticipantIndex>1000</MaxAutoParticipantIndex>
+        </Discovery>
+    </Domain>
+</CycloneDDS>

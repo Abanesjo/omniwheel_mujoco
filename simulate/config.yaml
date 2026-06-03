@@ -1,0 +1,13 @@
+scene_file: "/workspace/omniwheel_mujoco/mujoco/scene.xml"
+
+publish_rate_hz: 100.0
+command_timeout_sec: 0.2
+torque_limit_nm: 7.1
+
+# First-order motor torque response before commands reach MuJoCo actuators.
+motor_time_constant_sec: 0.05
+
+# Encoder-like quantization for wheel joint positions.
+encoder_ticks_per_rev: 4096
+
+print_scene_information: true
