@@ -14,6 +14,10 @@ The script builds the image and starts the MuJoCo viewer with ROS 2 publishers/s
 It uses host networking and CycloneDDS on multicast-enabled loopback, matching the
 `omniwheel_ros` Docker setup.
 
+The sensors publish at 100Hz and the physics step runs at 500Hz
+
+![publish_rate](docs/hz.png)
+
 ## Control Input
 
 Publish a base-frame wrench, matching the real `omni/` motor torque controller:

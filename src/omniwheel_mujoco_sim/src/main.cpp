@@ -395,6 +395,12 @@ class OmniwheelRosBridge : public rclcpp::Node {
     }
   }
 
+  void publishClock(mjtNum sim_time) {
+    rosgraph_msgs::msg::Clock clock_msg;
+    clock_msg.clock = stampFromSimTime(sim_time);
+    clock_pub_->publish(clock_msg);
+  }
+
  private:
   void initialize(mjModel* model) {
     actuator_ids_[0] = nameToIdOrThrow(model, mjOBJ_ACTUATOR, "rim_left_motor");
@@ -443,10 +449,6 @@ class OmniwheelRosBridge : public rclcpp::Node {
     }
 
     const auto stamp = stampFromSimTime(g_data->time);
-
-    rosgraph_msgs::msg::Clock clock_msg;
-    clock_msg.clock = stamp;
-    clock_pub_->publish(clock_msg);
 
     const int base_qpos = g_model->jnt_qposadr[base_freejoint_id_];
     const int base_qvel = g_model->jnt_dofadr[base_freejoint_id_];
@@ -655,6 +657,16 @@ class OmniwheelRosBridge : public rclcpp::Node {
 
 std::shared_ptr<OmniwheelRosBridge> g_bridge;
 
+void stepPhysics(mjModel* model, mjData* data) {
+  if (g_bridge) {
+    g_bridge->applyControls(model, data);
+  }
+  mj_step(model, data);
+  if (g_bridge) {
+    g_bridge->publishClock(data->time);
+  }
+}
+
 void PhysicsLoop(mj::Simulate& sim) {
   std::chrono::time_point<mj::Simulate::Clock> sync_cpu;
   mjtNum sync_sim = 0;
@@ -734,10 +746,7 @@ void PhysicsLoop(mj::Simulate& sim) {
           sync_sim = g_data->time;
           sim.speed_changed = false;
 
-          if (g_bridge) {
-            g_bridge->applyControls(g_model, g_data);
-          }
-          mj_step(g_model, g_data);
+          stepPhysics(g_model, g_data);
           stepped = true;
         } else {
           bool measured = false;
@@ -752,10 +761,7 @@ void PhysicsLoop(mj::Simulate& sim) {
               measured = true;
             }
 
-            if (g_bridge) {
-              g_bridge->applyControls(g_model, g_data);
-            }
-            mj_step(g_model, g_data);
+            stepPhysics(g_model, g_data);
             stepped = true;
 
             if (g_data->time < previous_sim) {
