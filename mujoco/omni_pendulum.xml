@@ -683,12 +683,11 @@
       </body>
       <body name="pendulum_link1" pos="0 0 0.48833" quat="0 0 0.707107 0.707107">
         <inertial pos="0.00059893 -2.2335e-05 8.086e-08" quat="0.499787 0.499801 0.500206 0.500206" mass="0.019711" diaginertia="1.7958e-06 1.5161e-06 1.1938e-06" />
-        <joint name="pendulum_joint1" pos="0 0 0" axis="0 0 -1" range="-0.174533 0.174533" />
+        <joint name="pendulum_ball_joint" type="ball" pos="0 0 0" limited="true" range="0 0.174533" />
         <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.071 0.91 0.816 1" mesh="pendulum_link1" />
         <geom type="mesh" rgba="0.071 0.91 0.816 1" mesh="pendulum_link1" contype="1" conaffinity="0" />
         <body name="pendulum_link2" quat="0.5 -0.5 0.5 -0.5">
           <inertial pos="-0.907537 -4.53403e-07 0.000179757" quat="0.485113 0.514416 0.48441 0.515159" mass="1.07774" diaginertia="0.0587768 0.0587747 0.000502723" />
-          <joint name="pendulum_joint2" pos="0 0 0" axis="0 0 -1" range="-0.174533 0.174533" />
           <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.071 0.91 0.816 1" mesh="pendulum_link2" />
           <geom type="mesh" rgba="0.071 0.91 0.816 1" mesh="pendulum_link2" contype="1" conaffinity="0" />
           <geom pos="-1.0125 0 0" quat="0 0.707107 0 -0.707107" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.68627 0.65882 0.63922 1" mesh="pendulum_ee" />
@@ -709,7 +708,7 @@
     <jointvel name="rim_right_joint_vel" joint="rim_right_joint" />
     <jointpos name="rim_back_joint_pos" joint="rim_back_joint" />
     <jointvel name="rim_back_joint_vel" joint="rim_back_joint" />
-    <jointpos name="pendulum_joint1_angle" joint="pendulum_joint1" />
-    <jointpos name="pendulum_joint2_angle" joint="pendulum_joint2" />
+    <ballquat name="pendulum_ball_quat" joint="pendulum_ball_joint" />
+    <ballangvel name="pendulum_ball_angvel" joint="pendulum_ball_joint" />
   </sensor>
 </mujoco>

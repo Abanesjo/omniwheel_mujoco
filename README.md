@@ -1,6 +1,6 @@
 # omniwheel_mujoco
 
-Docker-based MuJoCo simulator for the omniwheel robot. The container uses ROS 2 Humble and CycloneDDS; the host ROS install is not used.
+Docker-based MuJoCo simulator for the omniwheel robot. The container uses ROS 2 Humble and CycloneDDS;
 
 ## Run
 

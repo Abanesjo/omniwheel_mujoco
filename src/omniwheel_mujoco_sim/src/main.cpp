@@ -404,8 +404,7 @@ class OmniwheelRosBridge : public rclcpp::Node {
     wheel_joint_ids_[0] = nameToIdOrThrow(model, mjOBJ_JOINT, "rim_left_joint");
     wheel_joint_ids_[1] = nameToIdOrThrow(model, mjOBJ_JOINT, "rim_right_joint");
     wheel_joint_ids_[2] = nameToIdOrThrow(model, mjOBJ_JOINT, "rim_back_joint");
-    pendulum_joint_ids_[0] = nameToIdOrThrow(model, mjOBJ_JOINT, "pendulum_joint1");
-    pendulum_joint_ids_[1] = nameToIdOrThrow(model, mjOBJ_JOINT, "pendulum_joint2");
+    pendulum_ball_joint_id_ = nameToIdOrThrow(model, mjOBJ_JOINT, "pendulum_ball_joint");
     base_freejoint_id_ = nameToIdOrThrow(model, mjOBJ_JOINT, "base_freejoint");
 
     if (g_config.print_scene_information) {
@@ -531,6 +530,25 @@ class OmniwheelRosBridge : public rclcpp::Node {
     return velocities;
   }
 
+  std::array<double, 2> pendulumAngles() const {
+    const int qpos = g_model->jnt_qposadr[pendulum_ball_joint_id_];
+    mjtNum quat[4] = {g_data->qpos[qpos + 0], g_data->qpos[qpos + 1], g_data->qpos[qpos + 2],
+                      g_data->qpos[qpos + 3]};
+    mju_normalize4(quat);
+
+    mjtNum angle_axis[3];
+    mju_quat2Vel(angle_axis, quat, 1.0);
+
+    // The old exported model used two hinge encoders. In pendulum_link1's local frame,
+    // Pendulum_Joint_1 was -Z and Pendulum_Joint_2 was -X.
+    return {-angle_axis[2], -angle_axis[0]};
+  }
+
+  std::array<double, 2> pendulumVelocities() const {
+    const int qvel = g_model->jnt_dofadr[pendulum_ball_joint_id_];
+    return {-g_data->qvel[qvel + 2], -g_data->qvel[qvel + 0]};
+  }
+
   void publishWheelOdometry(const builtin_interfaces::msg::Time& stamp) {
     const auto w_lrb = wheelVelocitiesLeftRightBack();
 
@@ -559,6 +577,8 @@ class OmniwheelRosBridge : public rclcpp::Node {
   void publishJointStates(const builtin_interfaces::msg::Time& stamp) {
     const auto wheel_pos_lrb = wheelPositionsLeftRightBack();
     const auto wheel_vel_lrb = wheelVelocitiesLeftRightBack();
+    const auto pendulum_pos = pendulumAngles();
+    const auto pendulum_vel = pendulumVelocities();
 
     sensor_msgs::msg::JointState joint_state;
     joint_state.header.stamp = stamp;
@@ -578,12 +598,10 @@ class OmniwheelRosBridge : public rclcpp::Node {
     joint_state.effort[1] = applied_torque_nm_[0];
     joint_state.effort[2] = applied_torque_nm_[2];
 
-    for (std::size_t i = 0; i < 2; ++i) {
-      const int pos_addr = g_model->jnt_qposadr[pendulum_joint_ids_[i]];
-      const int vel_addr = g_model->jnt_dofadr[pendulum_joint_ids_[i]];
-      joint_state.position[3 + i] = g_data->qpos[pos_addr];
-      joint_state.velocity[3 + i] = g_data->qvel[vel_addr];
-    }
+    joint_state.position[3] = pendulum_pos[0];
+    joint_state.position[4] = pendulum_pos[1];
+    joint_state.velocity[3] = pendulum_vel[0];
+    joint_state.velocity[4] = pendulum_vel[1];
 
     joint_state_pub_->publish(joint_state);
   }
@@ -602,10 +620,9 @@ class OmniwheelRosBridge : public rclcpp::Node {
     msg.layout.dim[0].label = "encoder_values";
     msg.data.resize(6, 0.0F);
 
-    const int p1 = g_model->jnt_qposadr[pendulum_joint_ids_[0]];
-    const int p2 = g_model->jnt_qposadr[pendulum_joint_ids_[1]];
-    msg.data[0] = static_cast<float>(g_data->qpos[p1]) + zero0;
-    msg.data[1] = static_cast<float>(g_data->qpos[p2]) + zero1;
+    const auto pendulum_pos = pendulumAngles();
+    msg.data[0] = static_cast<float>(pendulum_pos[0]) + zero0;
+    msg.data[1] = static_cast<float>(pendulum_pos[1]) + zero1;
     msg.data[2] = encoder_limits[1][0];
     msg.data[3] = encoder_limits[1][1];
     msg.data[4] = encoder_limits[0][0];
@@ -617,7 +634,7 @@ class OmniwheelRosBridge : public rclcpp::Node {
   bool initialized_{false};
   std::array<int, 3> actuator_ids_{-1, -1, -1};
   std::array<int, 3> wheel_joint_ids_{-1, -1, -1};
-  std::array<int, 2> pendulum_joint_ids_{-1, -1};
+  int pendulum_ball_joint_id_{-1};
   int base_freejoint_id_{-1};
 
   std::mutex command_mutex_;
