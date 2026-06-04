@@ -8,6 +8,8 @@ Docker-based MuJoCo simulator for the omniwheel robot. The container uses ROS 2 
 ./build_and_run.sh
 ```
 
+![omniwheel_mujoco](docs/mujoco.png)
+
 The script builds the image and starts the MuJoCo viewer with ROS 2 publishers/subscribers active.
 It uses host networking and CycloneDDS on multicast-enabled loopback, matching the
 `omniwheel_ros` Docker setup.
