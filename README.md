@@ -41,3 +41,6 @@ wheel to `+/-4.7 Nm`, and decays to zero after a `0.2s` timeout.
 - `/clock` (`rosgraph_msgs/msg/Clock`)
 
 The sim does not publish camera or LiDAR topics and does not run `robot_localization`.
+
+## DDS
+The project assumes CycloneDDS, which you can edit the config of in the `cyclonedds.xml` file before running the `build_and_run.sh`
