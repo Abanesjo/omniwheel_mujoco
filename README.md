@@ -14,13 +14,16 @@ It uses host networking and CycloneDDS on multicast-enabled loopback, matching t
 
 ## Control Input
 
-Publish direct wheel torques:
+Publish a base-frame wrench, matching the real `omni/` motor torque controller:
 
 ```bash
-ros2 topic pub /omni/wheel_torques std_msgs/msg/Float64MultiArray "{data: [0.5, -0.5, 0.0]}"
+ros2 topic pub -r 100 /omni/cmd_wrench geometry_msgs/msg/Wrench \
+"{force: {x: 1.0, y: 0.0, z: 0.0}, torque: {x: 0.0, y: 0.0, z: 0.0}}"
 ```
 
-Order is `[left, right, back]` in Nm. Commands are saturated to `+/-7.1 Nm` and decay to zero after a `0.2s` timeout.
+The simulator uses `force.x`, `force.y`, and `torque.z`, converts them to wheel torques
+with the same Jacobian constants as `omni_motor_bulkctrl_torque.cpp`, saturates each
+wheel to `+/-4.7 Nm`, and decays to zero after a `0.2s` timeout.
 
 ## Published Interfaces
 

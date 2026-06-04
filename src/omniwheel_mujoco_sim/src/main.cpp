@@ -33,12 +33,12 @@
 #include <builtin_interfaces/msg/time.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/wrench.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rosgraph_msgs/msg/clock.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
-#include <std_msgs/msg/float64_multi_array.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -71,7 +71,7 @@ struct SimulationConfig {
   std::filesystem::path scene_file{"/workspace/omniwheel_mujoco/mujoco/scene.xml"};
   double publish_rate_hz{100.0};
   double command_timeout_sec{0.2};
-  double torque_limit_nm{7.1};
+  double torque_limit_nm{4.7};
   double motor_time_constant_sec{0.05};
   int encoder_ticks_per_rev{4096};
   bool print_scene_information{true};
@@ -237,6 +237,23 @@ double clamp(double value, double low, double high) {
   return std::min(std::max(value, low), high);
 }
 
+std::array<double, 3> baseWrenchToMotorTorquesRightLeftBack(double force_x, double force_y,
+                                                            double torque_z) {
+  // Closed form of omni_motor_bulkctrl_torque.cpp's J_torque matrix.
+  // Output order is real motor order: Wheel_1/right, Wheel_2/left, Wheel_3/back.
+  constexpr double wheel_radius_m = 0.101;
+  constexpr double base_radius_m = 0.1285;
+  const double torque_z_coeff = wheel_radius_m / (3.0 * base_radius_m);
+
+  return {
+      (-wheel_radius_m / std::sqrt(3.0)) * force_x + (wheel_radius_m / 3.0) * force_y +
+          torque_z_coeff * torque_z,
+      (wheel_radius_m / std::sqrt(3.0)) * force_x + (wheel_radius_m / 3.0) * force_y +
+          torque_z_coeff * torque_z,
+      -(2.0 * wheel_radius_m / 3.0) * force_y + torque_z_coeff * torque_z,
+  };
+}
+
 builtin_interfaces::msg::Time stampFromSimTime(double sim_time) {
   builtin_interfaces::msg::Time stamp;
   const double clamped = std::max(0.0, sim_time);
@@ -318,21 +335,18 @@ class OmniwheelRosBridge : public rclcpp::Node {
       : Node("omniwheel_mujoco_bridge"), sim_(sim) {
     using namespace std::chrono_literals;
 
-    wheel_torque_sub_ = create_subscription<std_msgs::msg::Float64MultiArray>(
-        "/omni/wheel_torques", rclcpp::QoS(10),
-        [this](const std_msgs::msg::Float64MultiArray::SharedPtr msg) {
-          if (msg->data.size() != 3) {
-            RCLCPP_WARN_THROTTLE(
-                get_logger(), *get_clock(), 1000,
-                "Ignoring /omni/wheel_torques: expected 3 values [left, right, back], got %zu",
-                msg->data.size());
-            return;
-          }
+    wrench_sub_ = create_subscription<geometry_msgs::msg::Wrench>(
+        "/omni/cmd_wrench", rclcpp::QoS(10),
+        [this](const geometry_msgs::msg::Wrench::SharedPtr msg) {
+          const auto motor_torque_rlb =
+              baseWrenchToMotorTorquesRightLeftBack(msg->force.x, msg->force.y, msg->torque.z);
+          const std::array<double, 3> motor_torque_lrb = {
+              motor_torque_rlb[1], motor_torque_rlb[0], motor_torque_rlb[2]};
 
           std::lock_guard<std::mutex> lock(command_mutex_);
           for (std::size_t i = 0; i < 3; ++i) {
             target_torque_nm_[i] =
-                clamp(msg->data[i], -g_config.torque_limit_nm, g_config.torque_limit_nm);
+                clamp(motor_torque_lrb[i], -g_config.torque_limit_nm, g_config.torque_limit_nm);
           }
           last_command_time_ = std::chrono::steady_clock::now();
           command_received_ = true;
@@ -612,7 +626,7 @@ class OmniwheelRosBridge : public rclcpp::Node {
   std::chrono::steady_clock::time_point last_command_time_{std::chrono::steady_clock::now()};
   bool command_received_{false};
 
-  rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr wheel_torque_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::Wrench>::SharedPtr wrench_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr wheel_odom_pub_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
