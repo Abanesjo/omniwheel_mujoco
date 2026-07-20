@@ -2,6 +2,11 @@
 
 Docker-based MuJoCo simulator for the omniwheel robot. The container uses ROS 2 Humble and CycloneDDS;
 
+## Clone
+```
+git clone --recursive https://github.com/Abanesjo/omniwheel_mujoco
+```
+
 ## Run
 
 ```bash
