@@ -1,4 +1,5 @@
-scene_file: "/workspace/omniwheel_mujoco/mujoco/scene.xml"
+scene_file: "/workspace/omniwheel_mujoco/mujoco/scene_static.xml"
+fixed_pendulum: true
 
 publish_rate_hz: 100.0
 command_timeout_sec: 0.2
